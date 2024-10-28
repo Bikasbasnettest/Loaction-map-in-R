@@ -7,7 +7,50 @@ Nepal<-ggplot() +
   geom_sf(data = studyarea, fill= "darkgreen") +
   theme_minimal()
 Nepal
+#for the additions of the  location data 
+library(ggplot2)
+library(sf)
+library(ggspatial)
+studyarea<-st_read("E:/Location map in Rshape file/Kasi/India_State_Boundary.shp")
+library(readxl)
+Res_Site1CD<- read_excel("E:/Location map in Rshape file/SMD CURRENT DATA TABLE.xlsx")
+Res_Site1CD
+########another code 
+library(dplyr)
+Res_Site <- Res_Site1CD %>%
+  mutate(EI_Level = case_when(
+    EI == 0 ~ "0",
+    EI >= 1 & EI < 26 ~ "25",
+    EI >= 26 & EI < 51 ~ "50",
+    EI >= 51 & EI < 76 ~ "75",
+    EI >= 76 & EI <= 100 ~ "100"
+  )) %>%
+  mutate(EI_Level = factor(EI_Level, levels = c("0", "25", "50", "75", "100")))  # Set the correct order
 
+# Convert to spatial data frame
+research_sites_sf <- st_as_sf(Res_Site, coords = c("Longitude", "Latitude"), crs = 4326)
+
+# Create the map with specified EI levels
+Mapcd <- ggplot() +
+  geom_sf(data = studyarea, fill = "white", color = "black") +  # Shapefile layer
+  geom_sf(data = research_sites_sf, aes(color = EI_Level), size = 3) +  # Research sites layer with color
+  geom_sf_text(data = research_sites_sf, aes(label = Location), 
+               nudge_y = 0.2, size = 3, color = "black") +  # Adding labels
+  scale_color_manual(values = c(
+    "0" = "#D3D3D3",           # Light grey for 0
+    "25" = "#FF9999",          # Light red for 25
+    "50" = "#FF6666",          # Medium red for 50
+    "75" = "#FF3333",          # Darker red for 75
+    "100" = "#FF0000"          # Bright red for 100
+  )) +  # Customize colors
+  theme_minimal() +
+  labs(title = "Research Sites(Current data) in India",
+       x = "Longitude",
+       y = "Latitude",
+       color = "EI Level") +  # Legend title
+  guides(color = guide_legend(override.aes = list(size = 4)))
+Mapcd
+#####################
 colnames(studyarea)
 
 # Define custom colors for each province
